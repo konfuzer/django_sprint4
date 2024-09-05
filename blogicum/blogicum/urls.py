@@ -10,7 +10,9 @@ urlpatterns = [
     path('', include('blog.urls')),
     path('auth/', include('django.contrib.auth.urls')),
     path('auth/registration/',
-         TemplateView.as_view(template_name="registration/register.html"), name='register'),
+         TemplateView.as_view(template_name="registration/register.html"),
+         name='register'
+         ),
 ]
 
 handler403 = 'pages.views.csrf_failure'

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Post, Comment, Location
+from .models import Comment, Post
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 

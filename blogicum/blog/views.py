@@ -60,7 +60,11 @@ def post_detail(request, post_id):
         return render(request, 'blog/detail.html', context)
 
     post = get_object_or_404(
-        Post, id=post_id, is_published=True, category__is_published=True, pub_date__lt=now())
+        Post,
+        id=post_id,
+        is_published=True,
+        category__is_published=True,
+        pub_date__lt=now())
     comments = Comment.objects.filter(post=post).order_by('created_at')
     form = CommentForm()
 
