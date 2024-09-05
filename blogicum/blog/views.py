@@ -5,14 +5,22 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import now
 from django.db.models import Count
+from django.urls import reverse
+
 from .models import Category, Comment, Post
 from .forms import PostForm, CustomUserCreationForm, CommentForm
-from django.urls import reverse
+
 
 User = get_user_model()
 
-
 NUM_POSTS_ON_INDEX = 10
+
+
+def paginate_queryset(request, queryset, num_per_page=NUM_POSTS_ON_INDEX):
+    paginator = Paginator(queryset, num_per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return page_obj
 
 
 def custom_profile_view(request):
@@ -28,15 +36,9 @@ def get_published_posts():
 
 
 def index(request):
-    posts = get_published_posts()
-    paginator = Paginator(posts, NUM_POSTS_ON_INDEX)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    posts_with_comments = []
-    for post in page_obj:
-        post.comment_count = post.comments.count()
-        posts_with_comments.append(post)
+    posts = get_published_posts().annotate(
+        comment_count=Count('comments')).order_by('-pub_date')
+    page_obj = paginate_queryset(request, posts)
 
     context = {
         'page_obj': page_obj,
@@ -49,7 +51,7 @@ def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
     if post.author == request.user:
-        comments = Comment.objects.filter(post=post).order_by('created_at')
+        comments = post.comments.order_by('created_at')
         form = CommentForm()
 
         context = {
@@ -64,8 +66,9 @@ def post_detail(request, post_id):
         id=post_id,
         is_published=True,
         category__is_published=True,
-        pub_date__lt=now())
-    comments = Comment.objects.filter(post=post).order_by('created_at')
+        pub_date__lt=now()
+    )
+    comments = post.comments.order_by('created_at')
     form = CommentForm()
 
     context = {
@@ -80,9 +83,7 @@ def post_detail(request, post_id):
 def category_posts(request, slug):
     category = get_object_or_404(Category, slug=slug, is_published=True)
     posts = get_published_posts().filter(category=category)
-    paginator = Paginator(posts, NUM_POSTS_ON_INDEX)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginate_queryset(request, posts)
 
     context = {
         'category': category,
@@ -123,9 +124,7 @@ def profile(request, username):
             .annotate(comment_count=Count('comments')).order_by('-pub_date',)
         )
 
-    paginator = Paginator(posts, NUM_POSTS_ON_INDEX)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginate_queryset(request, posts)
 
     context = {
         'profile': profile,
