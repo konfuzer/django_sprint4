@@ -19,8 +19,7 @@ NUM_POSTS_ON_INDEX = 10
 def paginate_queryset(request, queryset, num_per_page=NUM_POSTS_ON_INDEX):
     paginator = Paginator(queryset, num_per_page)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    return page_obj
+    return paginator.get_page(page_number)
 
 
 def custom_profile_view(request):
